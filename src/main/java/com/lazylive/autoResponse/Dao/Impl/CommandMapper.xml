@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lazylive.autoResponse.Dao.CommandDao">
+    <resultMap type="com.lazylive.autoResponse.Entity.Command" id="result_Command_Map">
+        <id column="c_id" jdbcType="INTEGER" property="id"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="description" jdbcType="VARCHAR" property="description"/>
+        <collection resultMap="result_CommandContent_Map" property="contentList"/>
+    </resultMap>
+    <resultMap id="result_CommandContent_Map" type="com.lazylive.autoResponse.Entity.CommandContent">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <id column="content" jdbcType="VARCHAR" property="content"/>
+        <id column="command_id" jdbcType="INTEGER" property="commandId"/>
+        <id column="adddate" jdbcType="VARCHAR" property="adddate"/>
+        <id column="content_url" jdbcType="VARCHAR" property="url" />
+    </resultMap>
+
+    <!-- 根据 name (指令) 或 description (描述) 查找指令集 -->
+    <select id="selectCommand" parameterType="com.lazylive.autoResponse.Entity.Command"
+            resultMap="result_Command_Map">
+        SELECT a.id c_id, a.name, a.description, b.id, b.content,b.content_url, b.command_id FROM db_cmd a LEFT JOIN db_cmd_cont b
+        ON a.id=b.command_id
+        <where>
+            <if test="name != null and !&quot;&quot;.equals(name.trim())">
+                AND a.name =  #{name}
+            </if>
+            <if test="description != null and !&quot;&quot;.equals(description.trim())">
+                AND a.description like '%' #{description} '%'
+            </if>
+        </where>
+    </select>
+    <select id="selectCommandById" parameterType="com.lazylive.autoResponse.Entity.Command"
+            resultMap="result_Command_Map">
+		SELECT * FROM db_cmd WHERE id = #{id}
+	</select>
+    <!-- 根据commandId 指令对应的Content集 -->
+    <select id="selectCommandContentByCmdId" parameterType="com.lazylive.autoResponse.Entity.Command"
+            resultMap="result_CommandContent_Map">
+		SELECT * FROM db_cmd_cont WHERE COMMAND_ID = #{id}
+	</select>
+
+    <!-- 根据ID删除一或多条Command表中指令 -->
+    <delete id="deleteCommandById" parameterType="java.lang.reflect.Array">
+        DELETE FROM db_cmd WHERE ID in
+        <foreach item="ID" collection="array" open="(" separator=","
+                 close=")">
+            #{ID}
+        </foreach>
+    </delete>
+    <!-- 与 deleteCommandById 相辅删除指令相关的所有内容 -->
+    <delete id="deleteCommandContentByCommandId" parameterType="java.lang.reflect.Array">
+        DELETE FROM db_cmd_cont WHERE COMMAND_ID IN
+        <foreach item="COMMAND_ID" collection="array" open="("
+                 separator="," close=")">
+            #{command_id}
+        </foreach>
+    </delete>
+    <!-- 根据 ID 删除某指令的一条或多条对应内容（content） -->
+    <delete id="deleteCommandContentById" parameterType="java.lang.reflect.Array">
+        DELETE FROM db_cmd_cont WHERE ID IN
+        <foreach item="ID" collection="array" open="(" separator=","
+                 close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <!-- 删除爬虫过时内容 -->
+    <delete id="deleteCommandContentByAddDate" parameterType="java.lang.String">
+        DELETE FROM db_cmd_cont WHERE (COMMAND_ID=1 OR COMMAND_ID=2 OR COMMAND_ID=3 ) AND ADDDATE &lt;&gt; #{_parameter}
+	</delete>
+    <!-- 插入一条指令 -->
+    <insert id="insertCommand" parameterType="com.lazylive.autoResponse.Entity.Command"  keyProperty="id" useGeneratedKeys="true" >
+		iNSERT INTO db_cmd(NAME,DESCRIPTION) VALUES( #{name} , #{description} )
+	</insert>
+    <!-- 插入一条或多条指令内容 -->
+    <insert id="insertCommandContent" parameterType="java.util.List">
+        INSERT INTO db_cmd_cont (CONTENT,COMMAND_ID,ADDDATE,CONTENT_URL) VALUES
+        <foreach collection="list" item="content" separator=",">
+            (#{content.content},#{content.commandId},#{content.adddate},#{content.url})
+        </foreach>
+    </insert>
+</mapper>

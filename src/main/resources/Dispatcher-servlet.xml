@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+        xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:mvc="http://www.springframework.org/schema/mvc"
+        xmlns:context="http://www.springframework.org/schema/context"
+        xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+
+    <!-- DispatcherServlet的特定配置，提供相关的SpringMVC配置 -->
+
+    <!-- 对包中的所有类进行扫描 -->
+    <context:component-scan base-package="com.lazylive.autoResponse.Controller">
+        <!-- 配置过滤器，只搜索@Controller 标注的类 -->
+        <context:include-filter
+                type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <!-- HandlerMapping不用配置，SpringMVC默认启动。 -->
+    <!-- annotation-driven,扩充注解驱动，可以将请求绑定到指定控制器参数。 扩充注解驱动: DefaultAnnotationHandlerMapping与AnnotationMethodHandlerAdapter
+        两个bean -->
+    <mvc:annotation-driven>
+        <mvc:message-converters>
+            <bean class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter" />
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+
+    <!-- 设置resources/CSS/路径下资源 文件可见 -->
+    <mvc:default-servlet-handler/>
+    <!--<mvc:resources location="/resources/" mapping="/resources/**" />-->
+
+    <!--拦截器配置-->
+    <!-- org.springframework.web.servlet.view.InternalResourceViewResolver 视图资源解析器
+        获取具体视图层 (ViewResolver) 可以配置多个ViewResolver 使用order属性排序 InternalResourceViewResolver需要放在最后，其返回值为一个对象 -->
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix">
+            <value>/WEB-INF/html/</value>
+        </property>
+        <property name="suffix">
+            <value>.html</value>
+        </property>
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"></property>
+    </bean>
+</beans>
